@@ -18,7 +18,17 @@ namespace SSEGL1Viewer
         }
 
         private async void btnSearch_Click(object sender, EventArgs e)
-        {           
+        {
+            lstDevices.Items.Clear();
+
+            BTManager manager = new BTManager();
+
+            var devices = await manager.ScanAsync();
+
+            foreach (var d in devices)
+            {
+                lstDevices.Items.Add(d);
+            }
         }
     }
 }

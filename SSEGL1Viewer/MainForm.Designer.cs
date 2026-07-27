@@ -47,7 +47,7 @@
             lstDevices.FormattingEnabled = true;
             lstDevices.Location = new Point(50, 93);
             lstDevices.Name = "lstDevices";
-            lstDevices.Size = new Size(120, 94);
+            lstDevices.Size = new Size(410, 94);
             lstDevices.TabIndex = 1;
             // 
             // MainForm
