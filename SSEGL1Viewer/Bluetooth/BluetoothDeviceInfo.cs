@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SSEGL1Viewer.Bluetooth
+﻿namespace SSEGL1Viewer.Bluetooth
 {
     internal class BluetoothDeviceInfo
     {
@@ -13,9 +6,13 @@ namespace SSEGL1Viewer.Bluetooth
 
         public string Address { get; set; } = "";
 
+        public ulong BluetoothAddress { get; set; }
+
+        public short Rssi { get; set; }
+
         public override string ToString()
         {
-            return $"{Name}    {Address}";
+            return $"{Name}    {Address}    RSSI: {Rssi} dBm";
         }
     }
 }

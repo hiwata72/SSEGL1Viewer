@@ -6,7 +6,7 @@ namespace SSEGL1Viewer
 {
     public partial class MainForm : Form
     {
-        private BTManager manager = new BTManager();
+        private readonly BTManager _btManager = new();
         public MainForm()
         {
             InitializeComponent();
@@ -19,15 +19,30 @@ namespace SSEGL1Viewer
 
         private async void btnSearch_Click(object sender, EventArgs e)
         {
+            btnSearch.Enabled = false;
             lstDevices.Items.Clear();
 
-            BTManager manager = new BTManager();
-
-            var devices = await manager.ScanAsync();
-
-            foreach (var d in devices)
+            try
             {
-                lstDevices.Items.Add(d);
+                List<BluetoothDeviceInfo> devices =
+                    await _btManager.ScanAsync();
+
+                foreach (BluetoothDeviceInfo device in devices)
+                {
+                    lstDevices.Items.Add(device);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "BLEåüçıÉGÉâÅ[",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnSearch.Enabled = true;
             }
         }
     }
