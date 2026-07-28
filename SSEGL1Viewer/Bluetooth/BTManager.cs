@@ -1,130 +1,222 @@
 ﻿using System.Collections.Concurrent;
-using Windows.Devices.Bluetooth.Advertisement;
-using Windows.Storage.Streams;
+using Windows.Devices.Bluetooth;
+using Windows.Devices.Enumeration;
+using Windows.Devices.Bluetooth.Rfcomm;
 
 namespace SSEGL1Viewer.Bluetooth
 {
     internal class BTManager
     {
-        private const int ScanSeconds = 10;
+        private const int ScanSeconds = 20;
 
         public async Task<List<BluetoothDeviceInfo>> ScanAsync()
         {
             var foundDevices =
-                new ConcurrentDictionary<ulong, BluetoothDeviceInfo>();
+                new ConcurrentDictionary<string, BluetoothDeviceInfo>();
 
-            var watcher = new BluetoothLEAdvertisementWatcher
-            {
-                ScanningMode = BluetoothLEScanningMode.Active
-            };
+            // false = 未ペアリングのBluetooth Classic機器を検索
+            string selector =
+                BluetoothDevice.GetDeviceSelectorFromPairingState(false);
 
-            void ReceivedHandler(
-                BluetoothLEAdvertisementWatcher sender,
-                BluetoothLEAdvertisementReceivedEventArgs args)
+            DeviceWatcher watcher =
+                DeviceInformation.CreateWatcher(selector);
+
+            var scanCompleted =
+                new TaskCompletionSource<bool>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+
+            void AddedHandler(
+                DeviceWatcher sender,
+                DeviceInformation device)
             {
                 try
                 {
-                    BluetoothDeviceInfo receivedDevice =
-                        CreateDeviceInfo(args);
-
-                    foundDevices.AddOrUpdate(
-                        args.BluetoothAddress,
-                        receivedDevice,
-                        (_, existingDevice) =>
-                        {
-                            existingDevice.MergeFrom(receivedDevice);
-                            return existingDevice;
-                        });
+                    AddOrUpdateDevice(foundDevices, device);
                 }
                 catch
                 {
-                    // 一部の広告データを解析できなくても、
-                    // スキャン全体は継続する
+                    // 個別機器の情報取得に失敗しても検索は継続する
                 }
             }
 
-            watcher.Received += ReceivedHandler;
+            void UpdatedHandler(
+                DeviceWatcher sender,
+                DeviceInformationUpdate update)
+            {
+                if (!foundDevices.TryGetValue(
+                        update.Id,
+                        out BluetoothDeviceInfo? existing))
+                {
+                    return;
+                }
+
+                // 更新通知には名前が含まれない場合が多いため、
+                // ここでは現在の情報を保持する
+                existing.DeviceId = update.Id;
+            }
+
+            void EnumerationCompletedHandler(
+                DeviceWatcher sender,
+                object args)
+            {
+                scanCompleted.TrySetResult(true);
+            }
+
+            void StoppedHandler(
+                DeviceWatcher sender,
+                object args)
+            {
+                scanCompleted.TrySetResult(true);
+            }
+
+            watcher.Added += AddedHandler;
+            watcher.Updated += UpdatedHandler;
+            watcher.EnumerationCompleted += EnumerationCompletedHandler;
+            watcher.Stopped += StoppedHandler;
 
             try
             {
                 watcher.Start();
 
-                await Task.Delay(
-                    TimeSpan.FromSeconds(ScanSeconds));
+                Task timeoutTask =
+                    Task.Delay(TimeSpan.FromSeconds(ScanSeconds));
+
+                await Task.WhenAny(
+                    scanCompleted.Task,
+                    timeoutTask);
             }
             finally
             {
-                watcher.Stop();
-                watcher.Received -= ReceivedHandler;
+                if (watcher.Status == DeviceWatcherStatus.Started ||
+                    watcher.Status == DeviceWatcherStatus.EnumerationCompleted)
+                {
+                    watcher.Stop();
+                }
+
+                watcher.Added -= AddedHandler;
+                watcher.Updated -= UpdatedHandler;
+                watcher.EnumerationCompleted -=
+                    EnumerationCompletedHandler;
+                watcher.Stopped -= StoppedHandler;
             }
 
             return foundDevices.Values
-                .OrderByDescending(device => device.Rssi)
+                .OrderByDescending(device =>
+                    device.Name.StartsWith(
+                        "SSE-GL1",
+                        StringComparison.OrdinalIgnoreCase))
                 .ThenBy(device => device.Name)
                 .ToList();
         }
 
-        private static BluetoothDeviceInfo CreateDeviceInfo(
-            BluetoothLEAdvertisementReceivedEventArgs args)
+        public async Task<string> TestDirectAccessAsync()
         {
-            BluetoothLEAdvertisement advertisement =
-                args.Advertisement;
+            const ulong sseGl1Address = 0x143FA6362161;
 
-            var device = new BluetoothDeviceInfo
+            using BluetoothDevice? device =
+                await BluetoothDevice.FromBluetoothAddressAsync(
+                    sseGl1Address);
+
+            if (device is null)
             {
-                Address =
-                    FormatBluetoothAddress(args.BluetoothAddress),
+                return
+                    "SSE-GL1をBluetoothアドレスから取得できませんでした。";
+            }
 
-                BluetoothAddress =
-                    args.BluetoothAddress
+            return
+                $"取得成功: {device.Name}\r\n" +
+                $"Address: {FormatBluetoothAddress(device.BluetoothAddress)}\r\n" +
+                $"ConnectionStatus: {device.ConnectionStatus}";
+        }
+
+
+        public async Task<string> TestRfcommServicesAsync()
+        {
+            const ulong sseGl1Address = 0x143FA6362161;
+
+            using BluetoothDevice? device =
+                await BluetoothDevice.FromBluetoothAddressAsync(
+                    sseGl1Address);
+
+            if (device is null)
+            {
+                return "SSE-GL1を取得できませんでした。";
+            }
+
+            RfcommDeviceServicesResult result =
+                await device.GetRfcommServicesAsync(
+                    BluetoothCacheMode.Uncached);
+
+            if (result.Error != BluetoothError.Success)
+            {
+                return
+                    $"RFCOMMサービス取得失敗\r\n" +
+                    $"Error: {result.Error}";
+            }
+
+            if (result.Services.Count == 0)
+            {
+                return
+                    $"Device: {device.Name}\r\n" +
+                    "RFCOMMサービスは見つかりませんでした。";
+            }
+
+            var lines = new List<string>
+            {
+                $"Device: {device.Name}",
+                $"RFCOMMサービス数: {result.Services.Count}",
+                ""
             };
 
-            device.UpdateName(advertisement.LocalName);
-            device.UpdateRssi(args.RawSignalStrengthInDBm);
+            int index = 1;
 
-            foreach (Guid serviceUuid in advertisement.ServiceUuids)
+            foreach (RfcommDeviceService service in result.Services)
             {
-                device.AddServiceUuid(serviceUuid);
+                lines.Add($"Service {index}");
+                lines.Add($"  Name: {service.ConnectionServiceName}");
+                lines.Add($"  ServiceId: {service.ServiceId.Uuid}");
+                lines.Add($"  HostName: {service.ConnectionHostName}");
+                lines.Add("");
+
+                index++;
             }
 
-            foreach (
-                BluetoothLEManufacturerData manufacturer
-                in advertisement.ManufacturerData)
-            {
-                device.AddManufacturerData(
-                    FormatManufacturerData(manufacturer));
-            }
-
-            return device;
+            return string.Join("\r\n", lines);
         }
 
-        private static string FormatManufacturerData(
-            BluetoothLEManufacturerData manufacturer)
+
+        private static void AddOrUpdateDevice(
+            ConcurrentDictionary<string, BluetoothDeviceInfo> devices,
+            DeviceInformation device)
         {
-            string companyId =
-                manufacturer.CompanyId.ToString("X4");
+            string name = string.IsNullOrWhiteSpace(device.Name)
+                ? "(名前なし)"
+                : device.Name;
 
-            IBuffer buffer = manufacturer.Data;
-
-            if (buffer.Length == 0)
+            var deviceInfo = new BluetoothDeviceInfo
             {
-                return $"CompanyId={companyId}";
-            }
+                Name = name,
+                DeviceId = device.Id,
+                IsPaired = device.Pairing.IsPaired
+            };
 
-            byte[] bytes = new byte[(int)buffer.Length];
+            devices.AddOrUpdate(
+                device.Id,
+                deviceInfo,
+                (_, existing) =>
+                {
+                    if (existing.Name == "(名前なし)" &&
+                        name != "(名前なし)")
+                    {
+                        existing.Name = name;
+                    }
 
-            using (DataReader reader = DataReader.FromBuffer(buffer))
-            {
-                reader.ReadBytes(bytes);
-            }
+                    existing.IsPaired =
+                        device.Pairing.IsPaired;
 
-            string dataText = BitConverter
-                .ToString(bytes)
-                .Replace("-", " ");
-
-            return $"CompanyId={companyId} Data={dataText}";
+                    return existing;
+                });
         }
-
         private static string FormatBluetoothAddress(ulong address)
         {
             return string.Join(
