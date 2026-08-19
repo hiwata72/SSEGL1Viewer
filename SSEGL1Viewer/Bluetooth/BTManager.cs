@@ -56,6 +56,11 @@ namespace SSEGL1Viewer.Bluetooth
 
         public event Action<string>? ConnectionStatusChanged;
 
+        // SSE-GL1 実機90度回転試験による暫定値。
+        // 後で仕様値または精密校正値へ置き換える。
+        private const double GyroScaleDegPerSecondPerCount =
+            0.0572;
+
         private void SetConnectionStatus(string status)
         {
             ConnectionStatusChanged?.Invoke(status);
@@ -205,6 +210,17 @@ namespace SSEGL1Viewer.Bluetooth
                 await device.GetRfcommServicesAsync(
                     BluetoothCacheMode.Uncached);
 
+            // Uncachedでサービスが見つからなかった場合、
+            // Windows側のキャッシュも確認する
+            if (result.Error == BluetoothError.Success &&
+                result.Services.Count == 0)
+            {
+                result =
+                    await device.GetRfcommServicesAsync(
+                        BluetoothCacheMode.Cached);
+            }
+
+
             if (result.Error != BluetoothError.Success)
             {
                 return
@@ -300,17 +316,34 @@ namespace SSEGL1Viewer.Bluetooth
                 await BluetoothDevice.FromBluetoothAddressAsync(
                     SseGl1Address);
 
+            Debug.WriteLine(
+                $"[Connect] Device: " +
+                $"{(_device is null ? "NULL" : _device.Name)}");
+
             if (_device is null)
             {
                 return "SSE-GL1を取得できませんでした。";
             }
 
+            /*
+             * まずWindows側のキャッシュから
+             * SSCサービスを取得する。
+             */
+            Debug.WriteLine(
+                "[Connect] Cached取得開始");
+
             RfcommDeviceServicesResult servicesResult =
                 await _device.GetRfcommServicesForIdAsync(
                     SscServiceId,
-                    BluetoothCacheMode.Uncached);
+                    BluetoothCacheMode.Cached);
 
-            if (servicesResult.Error != BluetoothError.Success)
+            Debug.WriteLine(
+                $"[Connect] Cached取得完了: " +
+                $"Error={servicesResult.Error}, " +
+                $"Count={servicesResult.Services.Count}");
+
+            if (servicesResult.Error !=
+                BluetoothError.Success)
             {
                 Disconnect();
 
@@ -329,66 +362,148 @@ namespace SSEGL1Viewer.Bluetooth
                     $"UUID: {SscServiceUuid}";
             }
 
-            _serialPortService = servicesResult.Services[0];
+            /*
+             * 接続処理中はローカル変数で
+             * RfcommDeviceServiceを保持する。
+             */
+            RfcommDeviceService serialPortService =
+                servicesResult.Services[0];
+
+            _serialPortService =
+                serialPortService;
+
+            Debug.WriteLine(
+                $"[Connect] Service UUID: " +
+                $"{serialPortService.ServiceId.Uuid}");
 
             DeviceAccessStatus accessStatus =
-                await _serialPortService.RequestAccessAsync();
+                await serialPortService.RequestAccessAsync();
 
-            if (accessStatus != DeviceAccessStatus.Allowed)
+            Debug.WriteLine(
+                $"[Connect] AccessStatus: " +
+                $"{accessStatus}");
+
+            if (accessStatus !=
+                DeviceAccessStatus.Allowed)
             {
                 Disconnect();
 
                 return
-                    "SSCサービスへのアクセスが許可されませんでした。\r\n" +
+                    "SSCサービスへのアクセスが" +
+                    "許可されませんでした。\r\n" +
                     $"AccessStatus: {accessStatus}";
             }
 
             SocketProtectionLevel[] protectionLevels =
-            {
-                SocketProtectionLevel.BluetoothEncryptionAllowNullAuthentication,
-                SocketProtectionLevel.BluetoothEncryptionWithAuthentication,
-                SocketProtectionLevel.PlainSocket
+             {
+                SocketProtectionLevel
+                    .BluetoothEncryptionAllowNullAuthentication,
+
+                SocketProtectionLevel
+                    .BluetoothEncryptionWithAuthentication,
+
+                SocketProtectionLevel
+                    .PlainSocket
             };
 
-            var errors = new List<string>();
+            var errors =
+                new List<string>();
 
-            foreach (SocketProtectionLevel protectionLevel in protectionLevels)
+            foreach (
+                SocketProtectionLevel protectionLevel
+                in protectionLevels)
             {
                 _socket?.Dispose();
-                _socket = new StreamSocket();
+
+                _socket =
+                    new StreamSocket();
 
                 try
                 {
-                    await _socket.ConnectAsync(
-                        _serialPortService.ConnectionHostName,
-                        _serialPortService.ConnectionServiceName,
-                        protectionLevel);
+                    Debug.WriteLine(
+                        $"[Connect] Socket開始: " +
+                        $"{protectionLevel}");
+
+                    Debug.WriteLine(
+                        $"[Connect] Socket開始: {protectionLevel}");
+
+                    Task connectTask =
+                        _socket.ConnectAsync(
+                            serialPortService.ConnectionHostName,
+                            serialPortService.ConnectionServiceName,
+                            protectionLevel)
+                        .AsTask();
+
+                    Task completedTask =
+                        await Task.WhenAny(
+                            connectTask,
+                            Task.Delay(
+                                TimeSpan.FromSeconds(10)));
+
+                    if (completedTask != connectTask)
+                    {
+                        Debug.WriteLine(
+                            $"[Connect] Socketタイムアウト: " +
+                            $"{protectionLevel}");
+
+                        _socket.Dispose();
+                        _socket = null;
+
+                        throw new TimeoutException(
+                            $"RFCOMM接続が10秒でタイムアウトしました。" +
+                            $" Protection={protectionLevel}");
+                    }
+
+                    await connectTask;
+
+                    Debug.WriteLine(
+                        $"[Connect] Socket成功: {protectionLevel}");
+                    Debug.WriteLine(
+                        $"[Connect] Socket成功: " +
+                        $"{protectionLevel}");
 
                     _writer?.Dispose();
-                    _writer = new DataWriter(
-                        _socket.OutputStream);
+
+                    _writer =
+                        new DataWriter(
+                            _socket.OutputStream);
 
                     StartReceive();
 
                     DataReceived?.Invoke(
-                        $"{DateTime.Now:HH:mm:ss.fff} [接続完了]\r\n" +
+                        $"{DateTime.Now:HH:mm:ss.fff} " +
+                        $"[接続完了]\r\n" +
                         $"Socket     : OK\r\n" +
                         $"Writer     : OK\r\n" +
-                        $"Service    : {_serialPortService.ServiceId.Uuid}\r\n" +
-                        $"Protection : {protectionLevel}");
+                        $"Service    : " +
+                        $"{serialPortService.ServiceId.Uuid}\r\n" +
+                        $"Protection : " +
+                        $"{protectionLevel}");
 
-                    SetConnectionStatus("接続済み");
+                    SetConnectionStatus(
+                        "接続済み");
 
                     return
                         $"接続成功: {_device.Name}\r\n" +
                         $"Address: " +
-                        $"{FormatBluetoothAddress(_device.BluetoothAddress)}\r\n" +
-                        $"Service: {_serialPortService.ServiceId.Uuid}\r\n" +
-                        $"Protection: {protectionLevel}\r\n" +
-                        $"ConnectionStatus: {_device.ConnectionStatus}";
+                        $"{FormatBluetoothAddress(
+                            _device.BluetoothAddress)}\r\n" +
+                        $"Service: " +
+                        $"{serialPortService.ServiceId.Uuid}\r\n" +
+                        $"Protection: " +
+                        $"{protectionLevel}\r\n" +
+                        $"ConnectionStatus: " +
+                        $"{_device.ConnectionStatus}";
                 }
                 catch (Exception ex)
                 {
+                    Debug.WriteLine(
+                        $"[Connect] Socket失敗: " +
+                        $"{protectionLevel}, " +
+                        $"{ex.GetType().Name}, " +
+                        $"0x{ex.HResult:X8}, " +
+                        $"{ex.Message}");
+
                     errors.Add(
                         $"{protectionLevel}: " +
                         $"{ex.GetType().Name} " +
@@ -406,8 +521,119 @@ namespace SSEGL1Viewer.Bluetooth
             Disconnect();
 
             return
-                "SSCサービスへの接続に失敗しました。\r\n\r\n" +
-                string.Join("\r\n", errors);
+                "SSCサービスへの接続に失敗しました。" +
+                "\r\n\r\n" +
+                string.Join(
+                    "\r\n",
+                    errors);
+        }
+
+        public async Task<string> DumpRfcommServicesAsync()
+        {
+            BluetoothDevice? device =
+                await BluetoothDevice.FromBluetoothAddressAsync(
+                    SseGl1Address);
+
+            if (device is null)
+            {
+                return
+                    "SSE-GL1を取得できませんでした。";
+            }
+
+            Debug.WriteLine(
+                $"[RFCOMM] Device: {device.Name}");
+
+            Debug.WriteLine(
+                "[RFCOMM] Uncached全サービス取得開始");
+
+            RfcommDeviceServicesResult result =
+                await device.GetRfcommServicesAsync(
+                    BluetoothCacheMode.Uncached);
+
+            Debug.WriteLine(
+                $"[RFCOMM] Uncached取得完了: " +
+                $"Error={result.Error}, " +
+                $"Count={result.Services.Count}");
+
+            // Uncachedで取得できなければCachedも確認する
+            if (result.Error != BluetoothError.Success ||
+                result.Services.Count == 0)
+            {
+                Debug.WriteLine(
+                    "[RFCOMM] Cached全サービス取得開始");
+
+                result =
+                    await device.GetRfcommServicesAsync(
+                        BluetoothCacheMode.Cached);
+
+                Debug.WriteLine(
+                    $"[RFCOMM] Cached取得完了: " +
+                    $"Error={result.Error}, " +
+                    $"Count={result.Services.Count}");
+            }
+
+            if (result.Error != BluetoothError.Success)
+            {
+                return
+                    "RFCOMMサービス取得失敗\r\n" +
+                    $"Error: {result.Error}";
+            }
+
+            if (result.Services.Count == 0)
+            {
+                return
+                    $"Device: {device.Name}\r\n" +
+                    "RFCOMMサービスは見つかりませんでした。";
+            }
+
+            var lines =
+                new List<string>
+                {
+            $"Device: {device.Name}",
+            $"RFCOMMサービス数: {result.Services.Count}",
+            ""
+                };
+
+            for (int index = 0;
+                 index < result.Services.Count;
+                 index++)
+            {
+                RfcommDeviceService service =
+                    result.Services[index];
+
+                lines.Add(
+                    $"Service[{index}]");
+
+                lines.Add(
+                    $"UUID: " +
+                    $"{service.ServiceId.Uuid}");
+
+                lines.Add(
+                    $"Host: " +
+                    $"{service.ConnectionHostName}");
+
+                lines.Add(
+                    $"ServiceName: " +
+                    $"{service.ConnectionServiceName}");
+
+                lines.Add(
+                    $"MaxProtectionLevel: " +
+                    $"{service.MaxProtectionLevel}");
+
+                lines.Add("");
+
+                Debug.WriteLine(
+                    $"[RFCOMM] Service[{index}] " +
+                    $"UUID={service.ServiceId.Uuid}, " +
+                    $"Host={service.ConnectionHostName}, " +
+                    $"ServiceName={service.ConnectionServiceName}, " +
+                    $"MaxProtection={service.MaxProtectionLevel}");
+            }
+
+            return
+                string.Join(
+                    "\r\n",
+                    lines);
         }
 
         private void StartReceive()

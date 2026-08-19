@@ -51,6 +51,22 @@
             label7 = new Label();
             label1 = new Label();
             grpGyroscope = new GroupBox();
+            label18 = new Label();
+            lblFusedAngleZ = new Label();
+            label16 = new Label();
+            label17 = new Label();
+            lblFusedAngleY = new Label();
+            lblFusedAngleX = new Label();
+            label15 = new Label();
+            lblAccelAngleY = new Label();
+            lblAccelAngleX = new Label();
+            lblAccelAngleTitle = new Label();
+            label12 = new Label();
+            label13 = new Label();
+            label14 = new Label();
+            lblAngleZ = new Label();
+            lblAngleY = new Label();
+            lblAngleX = new Label();
             label9 = new Label();
             label10 = new Label();
             label11 = new Label();
@@ -60,6 +76,13 @@
             pnlMotionGraph = new DoubleBufferedPanel();
             lblGraphPlaceholder = new Label();
             grpDebugLog = new GroupBox();
+            btnRfcommTest = new Button();
+            pnlGyroGraph = new DoubleBufferedPanel();
+            btnGyroBias = new Button();
+            btnGyroAngleStart = new Button();
+            btnGyroAngleStop = new Button();
+            btnAngleReset = new Button();
+            pnlAngleGraph = new DoubleBufferedPanel();
             grpConnection.SuspendLayout();
             grpAcceleration.SuspendLayout();
             grpGyroscope.SuspendLayout();
@@ -104,9 +127,9 @@
             // lstDevices
             // 
             lstDevices.FormattingEnabled = true;
-            lstDevices.Location = new Point(383, 40);
+            lstDevices.Location = new Point(424, 40);
             lstDevices.Name = "lstDevices";
-            lstDevices.Size = new Size(649, 64);
+            lstDevices.Size = new Size(608, 64);
             lstDevices.TabIndex = 22;
             // 
             // label6
@@ -230,37 +253,40 @@
             grpAcceleration.Controls.Add(label1);
             grpAcceleration.Location = new Point(21, 138);
             grpAcceleration.Name = "grpAcceleration";
-            grpAcceleration.Size = new Size(359, 64);
+            grpAcceleration.Size = new Size(393, 64);
             grpAcceleration.TabIndex = 20;
             grpAcceleration.TabStop = false;
             grpAcceleration.Text = "加速度";
             // 
             // lblPrimaryZ
             // 
-            lblPrimaryZ.Font = new Font("Yu Gothic UI", 15.75F, FontStyle.Bold);
-            lblPrimaryZ.Location = new Point(261, 22);
+            lblPrimaryZ.AutoSize = true;
+            lblPrimaryZ.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblPrimaryZ.Location = new Point(261, 28);
             lblPrimaryZ.Name = "lblPrimaryZ";
-            lblPrimaryZ.Size = new Size(80, 30);
+            lblPrimaryZ.Size = new Size(16, 21);
             lblPrimaryZ.TabIndex = 16;
             lblPrimaryZ.Text = "-";
             lblPrimaryZ.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lblPrimaryY
             // 
-            lblPrimaryY.Font = new Font("Yu Gothic UI", 15.75F, FontStyle.Bold);
-            lblPrimaryY.Location = new Point(145, 22);
+            lblPrimaryY.AutoSize = true;
+            lblPrimaryY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblPrimaryY.Location = new Point(145, 28);
             lblPrimaryY.Name = "lblPrimaryY";
-            lblPrimaryY.Size = new Size(80, 30);
+            lblPrimaryY.Size = new Size(16, 21);
             lblPrimaryY.TabIndex = 15;
             lblPrimaryY.Text = "-";
             lblPrimaryY.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lblPrimaryX
             // 
-            lblPrimaryX.Font = new Font("Yu Gothic UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 128);
-            lblPrimaryX.Location = new Point(33, 22);
+            lblPrimaryX.AutoSize = true;
+            lblPrimaryX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblPrimaryX.Location = new Point(33, 28);
             lblPrimaryX.Name = "lblPrimaryX";
-            lblPrimaryX.Size = new Size(80, 30);
+            lblPrimaryX.Size = new Size(16, 21);
             lblPrimaryX.TabIndex = 14;
             lblPrimaryX.Text = "-";
             lblPrimaryX.TextAlign = ContentAlignment.MiddleRight;
@@ -268,7 +294,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(229, 34);
+            label8.Location = new Point(229, 31);
             label8.Name = "label8";
             label8.Size = new Size(14, 15);
             label8.TabIndex = 2;
@@ -277,7 +303,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(119, 34);
+            label7.Location = new Point(119, 31);
             label7.Name = "label7";
             label7.Size = new Size(14, 15);
             label7.TabIndex = 1;
@@ -286,7 +312,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(13, 34);
+            label1.Location = new Point(13, 31);
             label1.Name = "label1";
             label1.Size = new Size(14, 15);
             label1.TabIndex = 0;
@@ -294,6 +320,22 @@
             // 
             // grpGyroscope
             // 
+            grpGyroscope.Controls.Add(label18);
+            grpGyroscope.Controls.Add(lblFusedAngleZ);
+            grpGyroscope.Controls.Add(label16);
+            grpGyroscope.Controls.Add(label17);
+            grpGyroscope.Controls.Add(lblFusedAngleY);
+            grpGyroscope.Controls.Add(lblFusedAngleX);
+            grpGyroscope.Controls.Add(label15);
+            grpGyroscope.Controls.Add(lblAccelAngleY);
+            grpGyroscope.Controls.Add(lblAccelAngleX);
+            grpGyroscope.Controls.Add(lblAccelAngleTitle);
+            grpGyroscope.Controls.Add(label12);
+            grpGyroscope.Controls.Add(label13);
+            grpGyroscope.Controls.Add(label14);
+            grpGyroscope.Controls.Add(lblAngleZ);
+            grpGyroscope.Controls.Add(lblAngleY);
+            grpGyroscope.Controls.Add(lblAngleX);
             grpGyroscope.Controls.Add(label9);
             grpGyroscope.Controls.Add(label10);
             grpGyroscope.Controls.Add(label11);
@@ -302,10 +344,162 @@
             grpGyroscope.Controls.Add(lblSecondaryX);
             grpGyroscope.Location = new Point(20, 208);
             grpGyroscope.Name = "grpGyroscope";
-            grpGyroscope.Size = new Size(360, 67);
+            grpGyroscope.Size = new Size(394, 176);
             grpGyroscope.TabIndex = 21;
             grpGyroscope.TabStop = false;
             grpGyroscope.Text = "ジャイロ";
+            // 
+            // label18
+            // 
+            label18.AutoSize = true;
+            label18.Location = new Point(294, 136);
+            label18.Name = "label18";
+            label18.Size = new Size(14, 15);
+            label18.TabIndex = 40;
+            label18.Text = "Z";
+            // 
+            // lblFusedAngleZ
+            // 
+            lblFusedAngleZ.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblFusedAngleZ.Location = new Point(313, 128);
+            lblFusedAngleZ.Name = "lblFusedAngleZ";
+            lblFusedAngleZ.Size = new Size(65, 30);
+            lblFusedAngleZ.TabIndex = 39;
+            lblFusedAngleZ.Text = "-";
+            lblFusedAngleZ.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.Location = new Point(190, 136);
+            label16.Name = "label16";
+            label16.Size = new Size(14, 15);
+            label16.TabIndex = 38;
+            label16.Text = "Y";
+            // 
+            // label17
+            // 
+            label17.AutoSize = true;
+            label17.Location = new Point(85, 136);
+            label17.Name = "label17";
+            label17.Size = new Size(14, 15);
+            label17.TabIndex = 37;
+            label17.Text = "X";
+            // 
+            // lblFusedAngleY
+            // 
+            lblFusedAngleY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblFusedAngleY.Location = new Point(209, 128);
+            lblFusedAngleY.Name = "lblFusedAngleY";
+            lblFusedAngleY.Size = new Size(65, 30);
+            lblFusedAngleY.TabIndex = 36;
+            lblFusedAngleY.Text = "-";
+            lblFusedAngleY.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // lblFusedAngleX
+            // 
+            lblFusedAngleX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblFusedAngleX.Location = new Point(105, 128);
+            lblFusedAngleX.Name = "lblFusedAngleX";
+            lblFusedAngleX.Size = new Size(65, 30);
+            lblFusedAngleX.TabIndex = 35;
+            lblFusedAngleX.Text = "-";
+            lblFusedAngleX.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // label15
+            // 
+            label15.AutoSize = true;
+            label15.Location = new Point(15, 138);
+            label15.Name = "label15";
+            label15.Size = new Size(46, 15);
+            label15.TabIndex = 34;
+            label15.Text = "融合角 ";
+            // 
+            // lblAccelAngleY
+            // 
+            lblAccelAngleY.AutoSize = true;
+            lblAccelAngleY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold);
+            lblAccelAngleY.Location = new Point(280, 98);
+            lblAccelAngleY.Name = "lblAccelAngleY";
+            lblAccelAngleY.Size = new Size(16, 21);
+            lblAccelAngleY.TabIndex = 33;
+            lblAccelAngleY.Text = "-";
+            // 
+            // lblAccelAngleX
+            // 
+            lblAccelAngleX.AutoSize = true;
+            lblAccelAngleX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold);
+            lblAccelAngleX.Location = new Point(155, 103);
+            lblAccelAngleX.Name = "lblAccelAngleX";
+            lblAccelAngleX.Size = new Size(16, 21);
+            lblAccelAngleX.TabIndex = 32;
+            lblAccelAngleX.Text = "-";
+            // 
+            // lblAccelAngleTitle
+            // 
+            lblAccelAngleTitle.AutoSize = true;
+            lblAccelAngleTitle.Location = new Point(15, 103);
+            lblAccelAngleTitle.Name = "lblAccelAngleTitle";
+            lblAccelAngleTitle.Size = new Size(55, 15);
+            lblAccelAngleTitle.TabIndex = 31;
+            lblAccelAngleTitle.Text = "加速度角";
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(230, 72);
+            label12.Name = "label12";
+            label12.Size = new Size(14, 15);
+            label12.TabIndex = 30;
+            label12.Text = "Z";
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.Location = new Point(120, 72);
+            label13.Name = "label13";
+            label13.Size = new Size(14, 15);
+            label13.TabIndex = 29;
+            label13.Text = "Y";
+            // 
+            // label14
+            // 
+            label14.AutoSize = true;
+            label14.Location = new Point(15, 72);
+            label14.Name = "label14";
+            label14.Size = new Size(14, 15);
+            label14.TabIndex = 28;
+            label14.Text = "X";
+            // 
+            // lblAngleZ
+            // 
+            lblAngleZ.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblAngleZ.Location = new Point(262, 64);
+            lblAngleZ.Name = "lblAngleZ";
+            lblAngleZ.Size = new Size(80, 30);
+            lblAngleZ.TabIndex = 27;
+            lblAngleZ.Text = "-";
+            lblAngleZ.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // lblAngleY
+            // 
+            lblAngleY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblAngleY.Location = new Point(146, 64);
+            lblAngleY.Name = "lblAngleY";
+            lblAngleY.Size = new Size(80, 30);
+            lblAngleY.TabIndex = 26;
+            lblAngleY.Text = "-";
+            lblAngleY.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // lblAngleX
+            // 
+            lblAngleX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
+            lblAngleX.Location = new Point(35, 64);
+            lblAngleX.Name = "lblAngleX";
+            lblAngleX.Size = new Size(80, 30);
+            lblAngleX.TabIndex = 25;
+            lblAngleX.Text = "-";
+            lblAngleX.TextAlign = ContentAlignment.MiddleRight;
             // 
             // label9
             // 
@@ -336,7 +530,7 @@
             // 
             // lblSecondaryZ
             // 
-            lblSecondaryZ.Font = new Font("Yu Gothic UI", 15.75F, FontStyle.Bold);
+            lblSecondaryZ.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
             lblSecondaryZ.Location = new Point(262, 27);
             lblSecondaryZ.Name = "lblSecondaryZ";
             lblSecondaryZ.Size = new Size(80, 30);
@@ -346,7 +540,7 @@
             // 
             // lblSecondaryY
             // 
-            lblSecondaryY.Font = new Font("Yu Gothic UI", 15.75F, FontStyle.Bold);
+            lblSecondaryY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
             lblSecondaryY.Location = new Point(146, 27);
             lblSecondaryY.Name = "lblSecondaryY";
             lblSecondaryY.Size = new Size(80, 30);
@@ -356,7 +550,7 @@
             // 
             // lblSecondaryX
             // 
-            lblSecondaryX.Font = new Font("Yu Gothic UI", 15.75F, FontStyle.Bold);
+            lblSecondaryX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
             lblSecondaryX.Location = new Point(35, 27);
             lblSecondaryX.Name = "lblSecondaryX";
             lblSecondaryX.Size = new Size(80, 30);
@@ -369,9 +563,9 @@
             pnlMotionGraph.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             pnlMotionGraph.BorderStyle = BorderStyle.FixedSingle;
             pnlMotionGraph.Controls.Add(lblGraphPlaceholder);
-            pnlMotionGraph.Location = new Point(403, 148);
+            pnlMotionGraph.Location = new Point(444, 150);
             pnlMotionGraph.Name = "pnlMotionGraph";
-            pnlMotionGraph.Size = new Size(669, 471);
+            pnlMotionGraph.Size = new Size(625, 150);
             pnlMotionGraph.TabIndex = 22;
             pnlMotionGraph.Paint += pnlMotionGraph_Paint;
             // 
@@ -394,11 +588,86 @@
             grpDebugLog.TabStop = false;
             grpDebugLog.Text = "デバッグログ";
             // 
+            // btnRfcommTest
+            // 
+            btnRfcommTest.Location = new Point(20, 404);
+            btnRfcommTest.Name = "btnRfcommTest";
+            btnRfcommTest.Size = new Size(128, 23);
+            btnRfcommTest.TabIndex = 24;
+            btnRfcommTest.Text = "RFCOMM確認";
+            btnRfcommTest.UseVisualStyleBackColor = true;
+            btnRfcommTest.Click += btnRfcommTest_Click;
+            // 
+            // pnlGyroGraph
+            // 
+            pnlGyroGraph.BorderStyle = BorderStyle.FixedSingle;
+            pnlGyroGraph.Location = new Point(444, 310);
+            pnlGyroGraph.Name = "pnlGyroGraph";
+            pnlGyroGraph.Size = new Size(625, 150);
+            pnlGyroGraph.TabIndex = 25;
+            pnlGyroGraph.Paint += pnlGyroGraph_Paint;
+            // 
+            // btnGyroBias
+            // 
+            btnGyroBias.Location = new Point(20, 444);
+            btnGyroBias.Name = "btnGyroBias";
+            btnGyroBias.Size = new Size(128, 23);
+            btnGyroBias.TabIndex = 26;
+            btnGyroBias.Text = "ジャイロ零点測定";
+            btnGyroBias.UseVisualStyleBackColor = true;
+            btnGyroBias.Click += btnGyroBias_Click;
+            // 
+            // btnGyroAngleStart
+            // 
+            btnGyroAngleStart.Location = new Point(21, 484);
+            btnGyroAngleStart.Name = "btnGyroAngleStart";
+            btnGyroAngleStart.Size = new Size(127, 23);
+            btnGyroAngleStart.TabIndex = 27;
+            btnGyroAngleStart.Text = "角度測定開始\n";
+            btnGyroAngleStart.UseVisualStyleBackColor = true;
+            btnGyroAngleStart.Click += btnGyroAngleStart_Click;
+            // 
+            // btnGyroAngleStop
+            // 
+            btnGyroAngleStop.Location = new Point(23, 524);
+            btnGyroAngleStop.Name = "btnGyroAngleStop";
+            btnGyroAngleStop.Size = new Size(123, 23);
+            btnGyroAngleStop.TabIndex = 28;
+            btnGyroAngleStop.Text = "角度測定停止";
+            btnGyroAngleStop.UseVisualStyleBackColor = true;
+            btnGyroAngleStop.Click += btnGyroAngleStop_Click;
+            // 
+            // btnAngleReset
+            // 
+            btnAngleReset.Location = new Point(21, 564);
+            btnAngleReset.Name = "btnAngleReset";
+            btnAngleReset.Size = new Size(127, 23);
+            btnAngleReset.TabIndex = 29;
+            btnAngleReset.Text = "角度リセット";
+            btnAngleReset.UseVisualStyleBackColor = true;
+            btnAngleReset.Click += btnAngleReset_Click;
+            // 
+            // pnlAngleGraph
+            // 
+            pnlAngleGraph.BorderStyle = BorderStyle.FixedSingle;
+            pnlAngleGraph.Location = new Point(444, 470);
+            pnlAngleGraph.Name = "pnlAngleGraph";
+            pnlAngleGraph.Size = new Size(625, 150);
+            pnlAngleGraph.TabIndex = 26;
+            pnlAngleGraph.Paint += pnlAngleGraph_Paint;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1084, 761);
+            Controls.Add(pnlAngleGraph);
+            Controls.Add(btnAngleReset);
+            Controls.Add(btnGyroAngleStop);
+            Controls.Add(btnGyroAngleStart);
+            Controls.Add(btnGyroBias);
+            Controls.Add(pnlGyroGraph);
+            Controls.Add(btnRfcommTest);
             Controls.Add(grpDebugLog);
             Controls.Add(pnlMotionGraph);
             Controls.Add(grpGyroscope);
@@ -455,5 +724,28 @@
         private DoubleBufferedPanel pnlMotionGraph;
         private Label lblGraphPlaceholder;
         private GroupBox grpDebugLog;
+        private Button btnRfcommTest;
+        private DoubleBufferedPanel pnlGyroGraph;
+        private Button btnGyroBias;
+        private Button btnGyroAngleStart;
+        private Button btnGyroAngleStop;
+        private Label label12;
+        private Label label13;
+        private Label label14;
+        private Label lblAngleZ;
+        private Label lblAngleY;
+        private Label lblAngleX;
+        private Button btnAngleReset;
+        private Label lblAccelAngleX;
+        private Label lblAccelAngleTitle;
+        private Label lblAccelAngleY;
+        private Label label16;
+        private Label label17;
+        private Label lblFusedAngleY;
+        private Label lblFusedAngleX;
+        private Label label15;
+        private DoubleBufferedPanel pnlAngleGraph;
+        private Label label18;
+        private Label lblFusedAngleZ;
     }
 }
