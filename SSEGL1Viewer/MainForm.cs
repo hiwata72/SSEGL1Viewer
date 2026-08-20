@@ -25,7 +25,7 @@ namespace SSEGL1Viewer
 
         private readonly Queue<double> _fusedAngleYHistory =
             new Queue<double>();
-        
+
         private readonly Queue<double> _fusedAngleZHistory =
             new Queue<double>();
 
@@ -1917,6 +1917,40 @@ namespace SSEGL1Viewer
                 Brushes.DimGray,
                 5,
                 height * 0.90f - 15);
+        }
+
+        private async void btnRfcommConnectTest_Click(
+            object sender,
+            EventArgs e)
+        {
+            try
+            {
+                btnRfcommConnectTest.Enabled =
+                    false;
+
+                string result =
+                    await _btManager
+                        .TestRfcommConnectAsync();
+
+                MessageBox.Show(
+                    result,
+                    "RFCOMM接続確認",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.ToString(),
+                    "RFCOMM接続確認エラー",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnRfcommConnectTest.Enabled =
+                    true;
+            }
         }
     }
 }

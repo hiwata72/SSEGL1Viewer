@@ -636,6 +636,98 @@ namespace SSEGL1Viewer.Bluetooth
                     lines);
         }
 
+        public async Task<string> TestRfcommConnectAsync()
+        {
+            BluetoothDevice? device =
+                await BluetoothDevice.FromBluetoothAddressAsync(
+                    SseGl1Address);
+
+            if (device is null)
+            {
+                return "SSE-GL1を取得できませんでした。";
+            }
+
+            RfcommDeviceServicesResult result =
+                await device.GetRfcommServicesAsync(
+                    BluetoothCacheMode.Uncached);
+
+            if (result.Error != BluetoothError.Success ||
+                result.Services.Count == 0)
+            {
+                result =
+                    await device.GetRfcommServicesAsync(
+                        BluetoothCacheMode.Cached);
+            }
+
+            if (result.Error != BluetoothError.Success)
+            {
+                return
+                    "RFCOMMサービス取得失敗\r\n" +
+                    $"Error: {result.Error}";
+            }
+
+            if (result.Services.Count == 0)
+            {
+                return "RFCOMMサービスが見つかりませんでした。";
+            }
+
+            var lines = new List<string>();
+
+            for (int index = 0;
+                 index < result.Services.Count;
+                 index++)
+            {
+                RfcommDeviceService service =
+                    result.Services[index];
+
+                lines.Add(
+                    $"Service[{index}]");
+                lines.Add(
+                    $"UUID: {service.ServiceId.Uuid}");
+
+                try
+                {
+                    using StreamSocket socket =
+                        new StreamSocket();
+
+                    lines.Add("接続開始...");
+
+                    await socket.ConnectAsync(
+                        service.ConnectionHostName,
+                        service.ConnectionServiceName,
+                        SocketProtectionLevel
+                            .BluetoothEncryptionWithAuthentication);
+
+                    lines.Add("接続成功");
+
+                    Debug.WriteLine(
+                        $"[RFCOMM-CONNECT] " +
+                        $"Service[{index}] 接続成功 " +
+                        $"UUID={service.ServiceId.Uuid}");
+                }
+                catch (Exception ex)
+                {
+                    lines.Add(
+                        $"接続失敗: " +
+                        $"{ex.GetType().Name}");
+
+                    lines.Add(
+                        ex.Message);
+
+                    Debug.WriteLine(
+                        $"[RFCOMM-CONNECT] " +
+                        $"Service[{index}] 接続失敗 " +
+                        $"{ex}");
+                }
+
+                lines.Add("");
+            }
+
+            return string.Join(
+                "\r\n",
+                lines);
+        }
+
         private void StartReceive()
         {
             if (_socket is null)

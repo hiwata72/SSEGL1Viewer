@@ -83,6 +83,7 @@
             btnGyroAngleStop = new Button();
             btnAngleReset = new Button();
             pnlAngleGraph = new DoubleBufferedPanel();
+            btnRfcommConnectTest = new Button();
             grpConnection.SuspendLayout();
             grpAcceleration.SuspendLayout();
             grpGyroscope.SuspendLayout();
@@ -656,11 +657,22 @@
             pnlAngleGraph.TabIndex = 26;
             pnlAngleGraph.Paint += pnlAngleGraph_Paint;
             // 
+            // btnRfcommConnectTest
+            // 
+            btnRfcommConnectTest.Location = new Point(188, 404);
+            btnRfcommConnectTest.Name = "btnRfcommConnectTest";
+            btnRfcommConnectTest.Size = new Size(126, 23);
+            btnRfcommConnectTest.TabIndex = 30;
+            btnRfcommConnectTest.Text = "RFCOMM接続確認";
+            btnRfcommConnectTest.UseVisualStyleBackColor = true;
+            btnRfcommConnectTest.Click += btnRfcommConnectTest_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1084, 761);
+            Controls.Add(btnRfcommConnectTest);
             Controls.Add(pnlAngleGraph);
             Controls.Add(btnAngleReset);
             Controls.Add(btnGyroAngleStop);
@@ -747,5 +759,6 @@
         private DoubleBufferedPanel pnlAngleGraph;
         private Label label18;
         private Label lblFusedAngleZ;
+        private Button btnRfcommConnectTest;
     }
 }
