@@ -4,13 +4,15 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Threading;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Rfcomm;
 using Windows.Devices.Enumeration;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
-using System.Threading;
+using System.Text;
 
 namespace SSEGL1Viewer.Bluetooth
 {
@@ -2155,6 +2157,166 @@ namespace SSEGL1Viewer.Bluetooth
             }
 
             return results;
+        }
+
+        public async Task<string> TestRfcommReceiveAsync()
+        {
+            BluetoothDevice? device =
+                await BluetoothDevice.FromBluetoothAddressAsync(
+                    SseGl1Address);
+
+            if (device is null)
+            {
+                return "SSE-GL1を取得できませんでした。";
+            }
+
+            RfcommDeviceServicesResult result =
+                await device.GetRfcommServicesAsync(
+                    BluetoothCacheMode.Uncached);
+
+            if (result.Error != BluetoothError.Success ||
+                result.Services.Count == 0)
+            {
+                result =
+                    await device.GetRfcommServicesAsync(
+                        BluetoothCacheMode.Cached);
+            }
+
+            if (result.Error != BluetoothError.Success)
+            {
+                return
+                    "RFCOMMサービス取得失敗\r\n" +
+                    $"Error: {result.Error}";
+            }
+
+            const int index = 2;
+
+            if (result.Services.Count <= index)
+            {
+                return
+                    $"Service[{index}] が見つかりません。";
+            }
+
+            RfcommDeviceService service =
+                result.Services[index];
+
+            var lines =
+                new List<string>
+                {
+            $"Service[{index}]",
+            $"UUID: {service.ServiceId.Uuid}"
+                };
+
+            try
+            {
+                using StreamSocket socket =
+                    new StreamSocket();
+
+                await socket.ConnectAsync(
+                    service.ConnectionHostName,
+                    service.ConnectionServiceName,
+                    SocketProtectionLevel
+                        .BluetoothEncryptionWithAuthentication);
+
+                lines.Add("接続成功");
+                lines.Add("5秒間連続受信開始...");
+
+                using var receivedStream =
+                    new MemoryStream();
+
+                using var cts =
+                    new CancellationTokenSource(
+                        TimeSpan.FromSeconds(5));
+
+                byte[] buffer =
+                    new byte[1024];
+
+                try
+                {
+                    while (true)
+                    {
+                        IBuffer receivedBuffer =
+                            await socket.InputStream
+                                .ReadAsync(
+                                    buffer.AsBuffer(),
+                                    (uint)buffer.Length,
+                                    InputStreamOptions.Partial)
+                                .AsTask(cts.Token);
+
+                        uint received =
+                            receivedBuffer.Length;
+
+                        if (received == 0)
+                        {
+                            break;
+                        }
+
+                        receivedStream.Write(
+                            buffer,
+                            0,
+                            (int)received);
+
+                        Debug.WriteLine(
+                            $"[RFCOMM-RX] " +
+                            $"Service[2] Chunk={received} bytes");
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    Debug.WriteLine(
+                        "[RFCOMM-RX] Service[2] 5秒受信終了");
+                }
+
+                byte[] allData =
+                    receivedStream.ToArray();
+
+                lines.Add(
+                    $"総受信: {allData.Length} bytes");
+
+                if (allData.Length == 0)
+                {
+                    lines.Add(
+                        "5秒間データ受信なし");
+                }
+                else
+                {
+                    string hex =
+                        BitConverter.ToString(
+                            allData);
+
+                    string ascii =
+                        Encoding.ASCII.GetString(
+                            allData);
+
+                    lines.Add("HEX:");
+                    lines.Add(hex);
+
+                    lines.Add("ASCII:");
+                    lines.Add(ascii);
+
+                    Debug.WriteLine(
+                        $"[RFCOMM-RX] " +
+                        $"Service[2] Total={allData.Length} bytes");
+
+                    Debug.WriteLine(
+                        $"[RFCOMM-RX] ASCII={ascii}");
+                }
+            }
+            catch (Exception ex)
+            {
+                lines.Add(
+                    $"エラー: {ex.GetType().Name}");
+
+                lines.Add(
+                    ex.Message);
+
+                Debug.WriteLine(
+                    $"[RFCOMM-RX] Service[2] ERROR {ex}");
+            }
+
+            return string.Join(
+                "\r\n",
+                lines);
         }
 
     }

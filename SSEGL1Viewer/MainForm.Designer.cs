@@ -51,6 +51,8 @@
             label7 = new Label();
             label1 = new Label();
             grpGyroscope = new GroupBox();
+            label19 = new Label();
+            label20 = new Label();
             label18 = new Label();
             lblFusedAngleZ = new Label();
             label16 = new Label();
@@ -84,6 +86,7 @@
             btnAngleReset = new Button();
             pnlAngleGraph = new DoubleBufferedPanel();
             btnRfcommConnectTest = new Button();
+            btnRfcommReceiveTest = new Button();
             grpConnection.SuspendLayout();
             grpAcceleration.SuspendLayout();
             grpGyroscope.SuspendLayout();
@@ -321,6 +324,8 @@
             // 
             // grpGyroscope
             // 
+            grpGyroscope.Controls.Add(label19);
+            grpGyroscope.Controls.Add(label20);
             grpGyroscope.Controls.Add(label18);
             grpGyroscope.Controls.Add(lblFusedAngleZ);
             grpGyroscope.Controls.Add(label16);
@@ -350,10 +355,28 @@
             grpGyroscope.TabStop = false;
             grpGyroscope.Text = "ジャイロ";
             // 
+            // label19
+            // 
+            label19.AutoSize = true;
+            label19.Location = new Point(189, 102);
+            label19.Name = "label19";
+            label19.Size = new Size(14, 15);
+            label19.TabIndex = 42;
+            label19.Text = "Y";
+            // 
+            // label20
+            // 
+            label20.AutoSize = true;
+            label20.Location = new Point(84, 102);
+            label20.Name = "label20";
+            label20.Size = new Size(14, 15);
+            label20.TabIndex = 41;
+            label20.Text = "X";
+            // 
             // label18
             // 
             label18.AutoSize = true;
-            label18.Location = new Point(294, 136);
+            label18.Location = new Point(294, 138);
             label18.Name = "label18";
             label18.Size = new Size(14, 15);
             label18.TabIndex = 40;
@@ -362,7 +385,7 @@
             // lblFusedAngleZ
             // 
             lblFusedAngleZ.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
-            lblFusedAngleZ.Location = new Point(313, 128);
+            lblFusedAngleZ.Location = new Point(313, 130);
             lblFusedAngleZ.Name = "lblFusedAngleZ";
             lblFusedAngleZ.Size = new Size(65, 30);
             lblFusedAngleZ.TabIndex = 39;
@@ -372,7 +395,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new Point(190, 136);
+            label16.Location = new Point(189, 138);
             label16.Name = "label16";
             label16.Size = new Size(14, 15);
             label16.TabIndex = 38;
@@ -381,7 +404,7 @@
             // label17
             // 
             label17.AutoSize = true;
-            label17.Location = new Point(85, 136);
+            label17.Location = new Point(84, 138);
             label17.Name = "label17";
             label17.Size = new Size(14, 15);
             label17.TabIndex = 37;
@@ -390,7 +413,7 @@
             // lblFusedAngleY
             // 
             lblFusedAngleY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
-            lblFusedAngleY.Location = new Point(209, 128);
+            lblFusedAngleY.Location = new Point(209, 130);
             lblFusedAngleY.Name = "lblFusedAngleY";
             lblFusedAngleY.Size = new Size(65, 30);
             lblFusedAngleY.TabIndex = 36;
@@ -400,7 +423,7 @@
             // lblFusedAngleX
             // 
             lblFusedAngleX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 128);
-            lblFusedAngleX.Location = new Point(105, 128);
+            lblFusedAngleX.Location = new Point(104, 130);
             lblFusedAngleX.Name = "lblFusedAngleX";
             lblFusedAngleX.Size = new Size(65, 30);
             lblFusedAngleX.TabIndex = 35;
@@ -412,34 +435,34 @@
             label15.AutoSize = true;
             label15.Location = new Point(15, 138);
             label15.Name = "label15";
-            label15.Size = new Size(46, 15);
+            label15.Size = new Size(43, 15);
             label15.TabIndex = 34;
-            label15.Text = "融合角 ";
+            label15.Text = "姿勢角";
             // 
             // lblAccelAngleY
             // 
-            lblAccelAngleY.AutoSize = true;
             lblAccelAngleY.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold);
-            lblAccelAngleY.Location = new Point(280, 98);
+            lblAccelAngleY.Location = new Point(209, 94);
             lblAccelAngleY.Name = "lblAccelAngleY";
-            lblAccelAngleY.Size = new Size(16, 21);
+            lblAccelAngleY.Size = new Size(65, 30);
             lblAccelAngleY.TabIndex = 33;
             lblAccelAngleY.Text = "-";
+            lblAccelAngleY.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lblAccelAngleX
             // 
-            lblAccelAngleX.AutoSize = true;
             lblAccelAngleX.Font = new Font("Yu Gothic UI", 12F, FontStyle.Bold);
-            lblAccelAngleX.Location = new Point(155, 103);
+            lblAccelAngleX.Location = new Point(104, 94);
             lblAccelAngleX.Name = "lblAccelAngleX";
-            lblAccelAngleX.Size = new Size(16, 21);
+            lblAccelAngleX.Size = new Size(65, 30);
             lblAccelAngleX.TabIndex = 32;
             lblAccelAngleX.Text = "-";
+            lblAccelAngleX.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lblAccelAngleTitle
             // 
             lblAccelAngleTitle.AutoSize = true;
-            lblAccelAngleTitle.Location = new Point(15, 103);
+            lblAccelAngleTitle.Location = new Point(14, 102);
             lblAccelAngleTitle.Name = "lblAccelAngleTitle";
             lblAccelAngleTitle.Size = new Size(55, 15);
             lblAccelAngleTitle.TabIndex = 31;
@@ -453,6 +476,7 @@
             label12.Size = new Size(14, 15);
             label12.TabIndex = 30;
             label12.Text = "Z";
+            label12.Visible = false;
             // 
             // label13
             // 
@@ -462,6 +486,7 @@
             label13.Size = new Size(14, 15);
             label13.TabIndex = 29;
             label13.Text = "Y";
+            label13.Visible = false;
             // 
             // label14
             // 
@@ -471,6 +496,7 @@
             label14.Size = new Size(14, 15);
             label14.TabIndex = 28;
             label14.Text = "X";
+            label14.Visible = false;
             // 
             // lblAngleZ
             // 
@@ -481,6 +507,7 @@
             lblAngleZ.TabIndex = 27;
             lblAngleZ.Text = "-";
             lblAngleZ.TextAlign = ContentAlignment.MiddleRight;
+            lblAngleZ.Visible = false;
             // 
             // lblAngleY
             // 
@@ -491,6 +518,7 @@
             lblAngleY.TabIndex = 26;
             lblAngleY.Text = "-";
             lblAngleY.TextAlign = ContentAlignment.MiddleRight;
+            lblAngleY.Visible = false;
             // 
             // lblAngleX
             // 
@@ -501,6 +529,7 @@
             lblAngleX.TabIndex = 25;
             lblAngleX.Text = "-";
             lblAngleX.TextAlign = ContentAlignment.MiddleRight;
+            lblAngleX.Visible = false;
             // 
             // label9
             // 
@@ -626,6 +655,7 @@
             btnGyroAngleStart.TabIndex = 27;
             btnGyroAngleStart.Text = "角度測定開始\n";
             btnGyroAngleStart.UseVisualStyleBackColor = true;
+            btnGyroAngleStart.Visible = false;
             btnGyroAngleStart.Click += btnGyroAngleStart_Click;
             // 
             // btnGyroAngleStop
@@ -636,6 +666,7 @@
             btnGyroAngleStop.TabIndex = 28;
             btnGyroAngleStop.Text = "角度測定停止";
             btnGyroAngleStop.UseVisualStyleBackColor = true;
+            btnGyroAngleStop.Visible = false;
             btnGyroAngleStop.Click += btnGyroAngleStop_Click;
             // 
             // btnAngleReset
@@ -644,7 +675,7 @@
             btnAngleReset.Name = "btnAngleReset";
             btnAngleReset.Size = new Size(127, 23);
             btnAngleReset.TabIndex = 29;
-            btnAngleReset.Text = "角度リセット";
+            btnAngleReset.Text = "アドレス基準";
             btnAngleReset.UseVisualStyleBackColor = true;
             btnAngleReset.Click += btnAngleReset_Click;
             // 
@@ -667,11 +698,22 @@
             btnRfcommConnectTest.UseVisualStyleBackColor = true;
             btnRfcommConnectTest.Click += btnRfcommConnectTest_Click;
             // 
+            // btnRfcommReceiveTest
+            // 
+            btnRfcommReceiveTest.Location = new Point(188, 444);
+            btnRfcommReceiveTest.Name = "btnRfcommReceiveTest";
+            btnRfcommReceiveTest.Size = new Size(126, 23);
+            btnRfcommReceiveTest.TabIndex = 31;
+            btnRfcommReceiveTest.Text = "RFCOMM受信確認\n";
+            btnRfcommReceiveTest.UseVisualStyleBackColor = true;
+            btnRfcommReceiveTest.Click += btnRfcommReceiveTest_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1084, 761);
+            Controls.Add(btnRfcommReceiveTest);
             Controls.Add(btnRfcommConnectTest);
             Controls.Add(pnlAngleGraph);
             Controls.Add(btnAngleReset);
@@ -760,5 +802,8 @@
         private Label label18;
         private Label lblFusedAngleZ;
         private Button btnRfcommConnectTest;
+        private Button btnRfcommReceiveTest;
+        private Label label19;
+        private Label label20;
     }
 }

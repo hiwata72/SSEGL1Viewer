@@ -4,6 +4,7 @@ using SSEGL1Viewer.Transport;
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 
 namespace SSEGL1Viewer
@@ -1461,14 +1462,14 @@ namespace SSEGL1Viewer
                     _isFusedAngleInitialized;
             }
 
-            lblAngleX.Text =
-                $"{angleX:+0.0;-0.0;0.0} °";
+            //lblAngleX.Text =
+            //    $"{angleX:+0.0;-0.0;0.0} °";
 
-            lblAngleY.Text =
-                $"{angleY:+0.0;-0.0;0.0} °";
+            //lblAngleY.Text =
+            //    $"{angleY:+0.0;-0.0;0.0} °";
 
-            lblAngleZ.Text =
-                $"{angleZ:+0.0;-0.0;0.0} °";
+            //lblAngleZ.Text =
+            //    $"{angleZ:+0.0;-0.0;0.0} °";
 
             double relativeFusedAngleX =
                 fusedAngleX -
@@ -1949,6 +1950,40 @@ namespace SSEGL1Viewer
             finally
             {
                 btnRfcommConnectTest.Enabled =
+                    true;
+            }
+        }
+
+        private async void btnRfcommReceiveTest_Click(
+            object sender,
+            EventArgs e)
+        {
+            try
+            {
+                btnRfcommReceiveTest.Enabled =
+                    false;
+
+                string result =
+                    await _btManager
+                        .TestRfcommReceiveAsync();
+
+                MessageBox.Show(
+                    result,
+                    "RFCOMM受信確認",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.ToString(),
+                    "RFCOMM受信確認エラー",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnRfcommReceiveTest.Enabled =
                     true;
             }
         }
