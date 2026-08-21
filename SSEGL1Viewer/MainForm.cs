@@ -1866,14 +1866,14 @@ namespace SSEGL1Viewer
                     FontStyle.Bold);
 
             g.DrawString(
-                "Accel X",
-                legendFont,
-                Brushes.DodgerBlue,
-                10,
-                10);
+               "Accel X",
+               legendFont,
+               Brushes.DodgerBlue,
+               10,
+               10);
 
             g.DrawString(
-                "Fused X",
+                "Posture X",
                 legendFont,
                 Brushes.OrangeRed,
                 90,
@@ -1883,14 +1883,14 @@ namespace SSEGL1Viewer
                 "Accel Y",
                 legendFont,
                 Brushes.ForestGreen,
-                170,
+                180,
                 10);
 
             g.DrawString(
-                "Fused Y",
+                "Posture Y",
                 legendFont,
                 Brushes.DarkOrange,
-                250,
+                260,
                 10);
 
             using Font axisFont =
