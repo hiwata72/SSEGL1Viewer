@@ -87,6 +87,9 @@
             pnlAngleGraph = new DoubleBufferedPanel();
             btnRfcommConnectTest = new Button();
             btnRfcommReceiveTest = new Button();
+            btnSwingRecordStart = new Button();
+            btnSaveSwingCsv = new Button();
+            lblSwingRecordStatus = new Label();
             grpConnection.SuspendLayout();
             grpAcceleration.SuspendLayout();
             grpGyroscope.SuspendLayout();
@@ -639,7 +642,7 @@
             // 
             // btnGyroBias
             // 
-            btnGyroBias.Location = new Point(20, 444);
+            btnGyroBias.Location = new Point(20, 439);
             btnGyroBias.Name = "btnGyroBias";
             btnGyroBias.Size = new Size(128, 23);
             btnGyroBias.TabIndex = 26;
@@ -649,7 +652,7 @@
             // 
             // btnGyroAngleStart
             // 
-            btnGyroAngleStart.Location = new Point(21, 484);
+            btnGyroAngleStart.Location = new Point(21, 474);
             btnGyroAngleStart.Name = "btnGyroAngleStart";
             btnGyroAngleStart.Size = new Size(127, 23);
             btnGyroAngleStart.TabIndex = 27;
@@ -660,7 +663,7 @@
             // 
             // btnGyroAngleStop
             // 
-            btnGyroAngleStop.Location = new Point(23, 524);
+            btnGyroAngleStop.Location = new Point(23, 509);
             btnGyroAngleStop.Name = "btnGyroAngleStop";
             btnGyroAngleStop.Size = new Size(123, 23);
             btnGyroAngleStop.TabIndex = 28;
@@ -671,7 +674,7 @@
             // 
             // btnAngleReset
             // 
-            btnAngleReset.Location = new Point(21, 564);
+            btnAngleReset.Location = new Point(21, 544);
             btnAngleReset.Name = "btnAngleReset";
             btnAngleReset.Size = new Size(127, 23);
             btnAngleReset.TabIndex = 29;
@@ -700,7 +703,7 @@
             // 
             // btnRfcommReceiveTest
             // 
-            btnRfcommReceiveTest.Location = new Point(188, 444);
+            btnRfcommReceiveTest.Location = new Point(188, 439);
             btnRfcommReceiveTest.Name = "btnRfcommReceiveTest";
             btnRfcommReceiveTest.Size = new Size(126, 23);
             btnRfcommReceiveTest.TabIndex = 31;
@@ -708,11 +711,43 @@
             btnRfcommReceiveTest.UseVisualStyleBackColor = true;
             btnRfcommReceiveTest.Click += btnRfcommReceiveTest_Click;
             // 
+            // btnSwingRecordStart
+            // 
+            btnSwingRecordStart.Location = new Point(23, 579);
+            btnSwingRecordStart.Name = "btnSwingRecordStart";
+            btnSwingRecordStart.Size = new Size(123, 23);
+            btnSwingRecordStart.TabIndex = 32;
+            btnSwingRecordStart.Text = "スイング記録開始";
+            btnSwingRecordStart.UseVisualStyleBackColor = true;
+            btnSwingRecordStart.Click += btnSwingRecordStart_Click;
+            // 
+            // btnSaveSwingCsv
+            // 
+            btnSaveSwingCsv.Location = new Point(188, 579);
+            btnSaveSwingCsv.Name = "btnSaveSwingCsv";
+            btnSaveSwingCsv.Size = new Size(126, 23);
+            btnSaveSwingCsv.TabIndex = 33;
+            btnSaveSwingCsv.Text = "CSV保存";
+            btnSaveSwingCsv.UseVisualStyleBackColor = true;
+            btnSaveSwingCsv.Click += btnSaveSwingCsv_Click;
+            // 
+            // lblSwingRecordStatus
+            // 
+            lblSwingRecordStatus.AutoSize = true;
+            lblSwingRecordStatus.Location = new Point(196, 549);
+            lblSwingRecordStatus.Name = "lblSwingRecordStatus";
+            lblSwingRecordStatus.Size = new Size(91, 15);
+            lblSwingRecordStatus.TabIndex = 34;
+            lblSwingRecordStatus.Text = "記録状態：待機";
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1084, 761);
+            Controls.Add(lblSwingRecordStatus);
+            Controls.Add(btnSaveSwingCsv);
+            Controls.Add(btnSwingRecordStart);
             Controls.Add(btnRfcommReceiveTest);
             Controls.Add(btnRfcommConnectTest);
             Controls.Add(pnlAngleGraph);
@@ -743,6 +778,7 @@
             grpDebugLog.ResumeLayout(false);
             grpDebugLog.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -805,5 +841,8 @@
         private Button btnRfcommReceiveTest;
         private Label label19;
         private Label label20;
+        private Button btnSwingRecordStart;
+        private Button btnSaveSwingCsv;
+        private Label lblSwingRecordStatus;
     }
 }

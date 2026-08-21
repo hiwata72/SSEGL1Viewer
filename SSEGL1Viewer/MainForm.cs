@@ -34,8 +34,6 @@ namespace SSEGL1Viewer
         private readonly Queue<int> _gyroYHistory = new();
         private readonly Queue<int> _gyroZHistory = new();
 
-
-
         private const int MaxGraphSamples = 8000;
 
         private readonly BTManager _btManager = new();
@@ -113,6 +111,18 @@ namespace SSEGL1Viewer
         private MotionVector3? _latestGyroSample;
 
         private MotionVector3? _latestAccelSample;
+
+        private readonly List<SwingSample> _swingSamples =
+            new List<SwingSample>();
+
+        private bool _isSwingRecording;
+
+        private double _swingRecordingElapsedSeconds;
+
+        private const double SwingRecordingDurationSeconds =
+            10.0;
+
+        private bool _isSwingDataSaved;
 
         public MainForm()
         {
@@ -745,7 +755,7 @@ namespace SSEGL1Viewer
 
                 // 全サンプルを履歴へ追加
                 foreach (GL1DecodedSample sample
-                         in packet.Samples)
+         in packet.Samples)
                 {
                     // ★ 最新加速度を保存
                     _latestAccelSample =
@@ -765,172 +775,238 @@ namespace SSEGL1Viewer
                         out double accelAngleY);
 
                     if (sample.Secondary.HasValue)
-                        if (sample.Secondary.HasValue)
+                    {
+                        MotionVector3 gyro =
+                            sample.Secondary.Value;
+
+                        // ★ 最新ジャイロ値を保存
+                        _latestGyroSample =
+                            gyro;
+
+                        AddGyroGraphSample(
+                            gyro.X,
+                            gyro.Y,
+                            gyro.Z);
+
+                        // ★ コンプリメンタリフィルタ
+                        double gyroRateX =
+                            (gyro.X - _gyroBiasX) *
+                            GyroScaleDegPerSecondPerCount;
+
+                        double gyroRateY =
+                            (gyro.Y - _gyroBiasY) *
+                            GyroScaleDegPerSecondPerCount;
+
+                        double gyroRateZ =
+                            (gyro.Z - _gyroBiasZ) *
+                            GyroScaleDegPerSecondPerCount;
+
+                        if (!_isFusedAngleInitialized)
                         {
-                            MotionVector3 gyro =
-                                sample.Secondary.Value;
+                            // 最初だけ加速度角を初期値にする
+                            _fusedAngleX =
+                                accelAngleX;
 
-                            // ★ 最新ジャイロ値を保存
-                            _latestGyroSample =
-                                gyro;
+                            _fusedAngleY =
+                                accelAngleY;
 
-                            AddGyroGraphSample(
-                                gyro.X,
-                                gyro.Y,
-                                gyro.Z);
+                            _fusedAngleZ =
+                                0.0;
 
-                            // ★ コンプリメンタリフィルタ
-                            double gyroRateX =
-                                (gyro.X - _gyroBiasX) *
-                                GyroScaleDegPerSecondPerCount;
+                            _isFusedAngleInitialized =
+                                true;
+                        }
+                        else
+                        {
+                            _fusedAngleX =
+                                ComplementaryAlpha *
+                                (_fusedAngleX +
+                                 gyroRateX *
+                                 GyroSampleIntervalSeconds) +
+                                (1.0 - ComplementaryAlpha) *
+                                accelAngleX;
 
-                            double gyroRateY =
-                                (gyro.Y - _gyroBiasY) *
-                                GyroScaleDegPerSecondPerCount;
+                            _fusedAngleY =
+                                ComplementaryAlpha *
+                                (_fusedAngleY +
+                                 gyroRateY *
+                                 GyroSampleIntervalSeconds) +
+                                (1.0 - ComplementaryAlpha) *
+                                accelAngleY;
 
-                            double gyroRateZ =
-                                (gyro.Z - _gyroBiasZ) *
-                                GyroScaleDegPerSecondPerCount;
-
-                            if (!_isFusedAngleInitialized)
-                            {
-                                // 最初だけ加速度角を初期値にする
-                                _fusedAngleX =
-                                    accelAngleX;
-
-                                _fusedAngleY =
-                                    accelAngleY;
-
-                                _isFusedAngleInitialized =
-                                        true;
-                            }
-                            else
-                            {
-                                _fusedAngleX =
-                                    ComplementaryAlpha *
-                                    (_fusedAngleX +
-                                     gyroRateX *
-                                     GyroSampleIntervalSeconds) +
-                                    (1.0 - ComplementaryAlpha) *
-                                    accelAngleX;
-
-                                _fusedAngleY =
-                                    ComplementaryAlpha *
-                                    (_fusedAngleY +
-                                    gyroRateY *
-                                    GyroSampleIntervalSeconds) +
-                                    (1.0 - ComplementaryAlpha) *
-                                    accelAngleY;
-
-                                // ★ Z角は加速度で補正できないため
-                                //    ジャイロ角速度を常時積分
-                                _fusedAngleZ +=
-                                    gyroRateZ *
-                                    GyroSampleIntervalSeconds;
-
-                            }
-
-                            // ★ 角度比較グラフ用履歴
-                            AddAngleGraphSample(accelAngleX, accelAngleY, _fusedAngleX, _fusedAngleY);
-
-
-
-                            if (_isGyroBiasMeasuring)
-                            {
-                                _gyroBiasSumX += gyro.X;
-                                _gyroBiasSumY += gyro.Y;
-                                _gyroBiasSumZ += gyro.Z;
-
-                                _gyroBiasSampleCount++;
-
-                                if (_gyroBiasSampleCount % 200 == 0)
-                                {
-                                    Debug.WriteLine(
-                                        $"Gyro Bias Measuring: " +
-                                        $"{_gyroBiasSampleCount}/" +
-                                        $"{GyroBiasTargetSamples}");
-                                }
-
-
-
-                                if (_gyroBiasSampleCount >=
-                                    GyroBiasTargetSamples)
-                                {
-                                    _gyroBiasX =
-                                        _gyroBiasSumX /
-                                        _gyroBiasSampleCount;
-
-                                    _gyroBiasY =
-                                        _gyroBiasSumY /
-                                        _gyroBiasSampleCount;
-
-                                    _gyroBiasZ =
-                                        _gyroBiasSumZ /
-                                        _gyroBiasSampleCount;
-
-                                    _isGyroBiasMeasuring = false;
-
-                                    Debug.WriteLine(
-                                        $"Gyro Bias Complete: " +
-                                        $"Samples={_gyroBiasSampleCount}, " +
-                                        $"X={_gyroBiasX:F3}, " +
-                                        $"Y={_gyroBiasY:F3}, " +
-                                        $"Z={_gyroBiasZ:F3}");
-                                }
-                            }
-
-                            if (_isGyroAngleMeasuring)
-                            {
-                                double correctedX =
-                                    gyro.X - _gyroBiasX;
-
-                                double correctedY =
-                                    gyro.Y - _gyroBiasY;
-
-                                double correctedZ =
-                                    gyro.Z - _gyroBiasZ;
-
-                                _gyroIntegralX +=
-                                    correctedX *
-                                    GyroSampleIntervalSeconds;
-
-                                _gyroIntegralY +=
-                                    correctedY *
-                                    GyroSampleIntervalSeconds;
-
-                                _gyroIntegralZ +=
-                                    correctedZ *
-                                    GyroSampleIntervalSeconds;
-
-                                double correctedGyroX =
-                                    gyro.X - _gyroBiasX;
-
-                                double correctedGyroY =
-                                    gyro.Y - _gyroBiasY;
-
-                                double correctedGyroZ =
-                                    gyro.Z - _gyroBiasZ;
-
-                                _gyroAngleX +=
-                                    correctedGyroX *
-                                    GyroScaleDegPerSecondPerCount *
-                                    GyroSampleIntervalSeconds;
-
-                                _gyroAngleY +=
-                                    correctedGyroY *
-                                    GyroScaleDegPerSecondPerCount *
-                                    GyroSampleIntervalSeconds;
-
-                                _gyroAngleZ +=
-                                    correctedGyroZ *
-                                    GyroScaleDegPerSecondPerCount *
-                                    GyroSampleIntervalSeconds;
-
-                            }
-
+                            // Z角は加速度で補正できないため
+                            // ジャイロ角速度を常時積分
+                            _fusedAngleZ +=
+                                gyroRateZ *
+                                GyroSampleIntervalSeconds;
                         }
 
+                        // ★ 角度比較グラフ用履歴
+                        AddAngleGraphSample(
+                            accelAngleX,
+                            accelAngleY,
+                            _fusedAngleX,
+                            _fusedAngleY);
+
+                        // ★ スイングデータ記録
+                        if (_isSwingRecording)
+                        {
+                            double postureX =
+                                _fusedAngleX -
+                                _angleZeroX;
+
+                            double postureY =
+                                _fusedAngleY -
+                                _angleZeroY;
+
+                            double postureZ =
+                                _fusedAngleZ -
+                                _angleZeroZ;
+
+                            _swingSamples.Add(
+                                new SwingSample
+                                {
+                                    TimeSeconds =
+                                        _swingRecordingElapsedSeconds,
+
+                                    AccelX =
+                                        sample.Primary.X,
+
+                                    AccelY =
+                                        sample.Primary.Y,
+
+                                    AccelZ =
+                                        sample.Primary.Z,
+
+                                    GyroX =
+                                        gyro.X,
+
+                                    GyroY =
+                                        gyro.Y,
+
+                                    GyroZ =
+                                        gyro.Z,
+
+                                    PostureX =
+                                        postureX,
+
+                                    PostureY =
+                                        postureY,
+
+                                    PostureZ =
+                                        postureZ
+                                });
+
+                            _swingRecordingElapsedSeconds +=
+                                GyroSampleIntervalSeconds;
+
+                            if (_swingSamples.Count % 1000 == 0)
+                            {
+                                Debug.WriteLine(
+                                    $"スイング記録中: " +
+                                    $"{_swingSamples.Count} samples, " +
+                                    $"{_swingRecordingElapsedSeconds:F3} s");
+                            }
+
+                            if (_swingRecordingElapsedSeconds >=
+                                SwingRecordingDurationSeconds)
+                            {
+                                _isSwingRecording =
+                                    false;
+
+                                Debug.WriteLine(
+                                    $"スイング記録完了: " +
+                                    $"{_swingSamples.Count} samples, " +
+                                    $"{_swingRecordingElapsedSeconds:F3} s");
+                            }
+                        }
+
+                        // ★ ジャイロBias測定
+                        if (_isGyroBiasMeasuring)
+                        {
+                            _gyroBiasSumX += gyro.X;
+                            _gyroBiasSumY += gyro.Y;
+                            _gyroBiasSumZ += gyro.Z;
+
+                            _gyroBiasSampleCount++;
+
+                            if (_gyroBiasSampleCount % 200 == 0)
+                            {
+                                Debug.WriteLine(
+                                    $"Gyro Bias Measuring: " +
+                                    $"{_gyroBiasSampleCount}/" +
+                                    $"{GyroBiasTargetSamples}");
+                            }
+
+                            if (_gyroBiasSampleCount >=
+                                GyroBiasTargetSamples)
+                            {
+                                _gyroBiasX =
+                                    _gyroBiasSumX /
+                                    _gyroBiasSampleCount;
+
+                                _gyroBiasY =
+                                    _gyroBiasSumY /
+                                    _gyroBiasSampleCount;
+
+                                _gyroBiasZ =
+                                    _gyroBiasSumZ /
+                                    _gyroBiasSampleCount;
+
+                                _isGyroBiasMeasuring =
+                                    false;
+
+                                Debug.WriteLine(
+                                    $"Gyro Bias Complete: " +
+                                    $"Samples={_gyroBiasSampleCount}, " +
+                                    $"X={_gyroBiasX:F3}, " +
+                                    $"Y={_gyroBiasY:F3}, " +
+                                    $"Z={_gyroBiasZ:F3}");
+                            }
+                        }
+
+                        // ★ 旧ジャイロ角度測定
+                        if (_isGyroAngleMeasuring)
+                        {
+                            double correctedX =
+                                gyro.X - _gyroBiasX;
+
+                            double correctedY =
+                                gyro.Y - _gyroBiasY;
+
+                            double correctedZ =
+                                gyro.Z - _gyroBiasZ;
+
+                            _gyroIntegralX +=
+                                correctedX *
+                                GyroSampleIntervalSeconds;
+
+                            _gyroIntegralY +=
+                                correctedY *
+                                GyroSampleIntervalSeconds;
+
+                            _gyroIntegralZ +=
+                                correctedZ *
+                                GyroSampleIntervalSeconds;
+
+                            _gyroAngleX +=
+                                correctedX *
+                                GyroScaleDegPerSecondPerCount *
+                                GyroSampleIntervalSeconds;
+
+                            _gyroAngleY +=
+                                correctedY *
+                                GyroScaleDegPerSecondPerCount *
+                                GyroSampleIntervalSeconds;
+
+                            _gyroAngleZ +=
+                                correctedZ *
+                                GyroScaleDegPerSecondPerCount *
+                                GyroSampleIntervalSeconds;
+                        }
+                    }
                 }
+
             }
         }
 
@@ -1306,8 +1382,13 @@ namespace SSEGL1Viewer
             GL1DecodedSample? sample;
             MotionVector3? latestGyro;
 
+            bool isSwingDataSaved;
+
             lock (_motionDataLock)
             {
+                isSwingDataSaved =
+                    _isSwingDataSaved;
+
                 packet =
                     _latestMotionPacket;
 
@@ -1374,10 +1455,11 @@ namespace SSEGL1Viewer
                 lblAccelAngleY.Text =
                     $"{accelAngleY:+0.0;-0.0;0.0} °";
 
-                Debug.WriteLine(
-                    $"Accel Angle: " +
-                    $"X={accelAngleX:F1} deg, " +
-                    $"Y={accelAngleY:F1} deg");
+                //Debug.WriteLine(
+                //    $"Accel Angle: " +
+                //    $"X={accelAngleX:F1} deg, " +
+                //    $"Y={accelAngleY:F1} deg");
+
             }
             else
             {
@@ -1505,6 +1587,74 @@ namespace SSEGL1Viewer
 
                 lblFusedAngleZ.Text =
                     "-";
+            }
+
+            // ★ スイング記録状態を安全に取得
+            bool isSwingRecording;
+            double swingRecordingElapsedSeconds;
+            int swingSampleCount;
+
+            lock (_motionDataLock)
+            {
+                isSwingRecording =
+                    _isSwingRecording;
+
+                swingRecordingElapsedSeconds =
+                    _swingRecordingElapsedSeconds;
+
+                swingSampleCount =
+                    _swingSamples.Count;
+            }
+
+            // ★ スイング記録状態表示
+            if (isSwingRecording)
+            {
+                lblSwingRecordStatus.Text =
+                    $"記録状態：記録中 " +
+                    $"{swingRecordingElapsedSeconds:F1} / " +
+                    $"{SwingRecordingDurationSeconds:F1} 秒";
+
+                btnSwingRecordStart.Enabled =
+                    false;
+
+                btnSaveSwingCsv.Enabled =
+                    false;
+            }
+            else if (swingSampleCount > 0 &&
+                     isSwingDataSaved)
+            {
+                lblSwingRecordStatus.Text =
+                    $"記録状態：保存済み " +
+                    $"{swingSampleCount} samples";
+
+                btnSwingRecordStart.Enabled =
+                    true;
+
+                btnSaveSwingCsv.Enabled =
+                    true;
+            }
+            else if (swingSampleCount > 0)
+            {
+                lblSwingRecordStatus.Text =
+                    $"記録状態：完了 " +
+                    $"{swingSampleCount} samples";
+
+                btnSwingRecordStart.Enabled =
+                    true;
+
+                btnSaveSwingCsv.Enabled =
+                    true;
+            }
+            else
+            {
+                lblSwingRecordStatus.Text =
+                    "記録状態：待機";
+
+                btnSwingRecordStart.Enabled =
+                    true;
+
+                btnSaveSwingCsv.Enabled =
+                    false;
             }
         }
 
@@ -1985,6 +2135,176 @@ namespace SSEGL1Viewer
             {
                 btnRfcommReceiveTest.Enabled =
                     true;
+            }
+        }
+
+        private void btnSwingRecordStart_Click(
+            object? sender,
+            EventArgs e)
+        {
+            lock (_motionDataLock)
+            {
+                if (_isSwingRecording)
+                {
+                    return;
+                }
+
+                _swingSamples.Clear();
+
+                _swingRecordingElapsedSeconds =
+                    0.0;
+
+                _isSwingDataSaved =
+                    false;
+
+                _isSwingRecording =
+                    true;
+            }
+            lock (_motionDataLock)
+            {
+                _swingSamples.Clear();
+
+                _swingRecordingElapsedSeconds = 0.0;
+
+                _isSwingRecording = true;
+            }
+
+            btnSwingRecordStart.Enabled =
+                false;
+
+            btnSaveSwingCsv.Enabled =
+                false;
+
+            Debug.WriteLine(
+                "スイング記録開始");
+
+            lock (_motionDataLock)
+            {
+                if (_isSwingRecording)
+                {
+                    return;
+                }
+
+                _swingSamples.Clear();
+
+                _swingRecordingElapsedSeconds =
+                    0.0;
+
+                _isSwingDataSaved =
+                    false;
+
+                _isSwingRecording =
+                    true;
+            }
+
+        }
+
+        private async void btnSaveSwingCsv_Click(
+            object? sender,
+            EventArgs e)
+        {
+            List<SwingSample> samples;
+
+            lock (_motionDataLock)
+            {
+                samples =
+                    new List<SwingSample>(
+                        _swingSamples);
+            }
+
+            if (samples.Count == 0)
+            {
+                MessageBox.Show(
+                    "保存するスイングデータがありません。",
+                    "CSV保存",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                return;
+            }
+
+            using SaveFileDialog dialog =
+                new SaveFileDialog();
+
+            dialog.Filter =
+                "CSVファイル (*.csv)|*.csv";
+
+            dialog.DefaultExt =
+                "csv";
+
+            dialog.AddExtension =
+                true;
+
+            dialog.FileName =
+                $"Swing_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+            if (dialog.ShowDialog() !=
+                DialogResult.OK)
+            {
+                return;
+            }
+
+            try
+            {
+                using StreamWriter writer =
+                    new StreamWriter(
+                        dialog.FileName,
+                        false,
+                        new System.Text.UTF8Encoding(
+                            true));
+
+                await writer.WriteLineAsync(
+                    "TimeSeconds," +
+                    "AccelX,AccelY,AccelZ," +
+                    "GyroX,GyroY,GyroZ," +
+                    "PostureX,PostureY,PostureZ");
+
+                foreach (SwingSample sample
+                         in samples)
+                {
+                    await writer.WriteLineAsync(
+                        $"{sample.TimeSeconds:F6}," +
+                        $"{sample.AccelX}," +
+                        $"{sample.AccelY}," +
+                        $"{sample.AccelZ}," +
+                        $"{sample.GyroX}," +
+                        $"{sample.GyroY}," +
+                        $"{sample.GyroZ}," +
+                        $"{sample.PostureX:F6}," +
+                        $"{sample.PostureY:F6}," +
+                        $"{sample.PostureZ:F6}");
+                }
+
+                MessageBox.Show(
+                    $"CSV保存が完了しました。\r\n\r\n" +
+                    $"Samples: {samples.Count}\r\n" +
+                    $"{dialog.FileName}",
+                    "CSV保存",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                lblSwingRecordStatus.Text =
+                    $"記録状態：保存済み " +
+                    $"{samples.Count} samples";
+
+                Debug.WriteLine(
+                    $"Swing CSV Saved: " +
+                    $"{samples.Count} samples, " +
+                    $"{dialog.FileName}");
+
+                lock (_motionDataLock)
+                {
+                    _isSwingDataSaved =
+                        true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "CSV保存エラー",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
     }
